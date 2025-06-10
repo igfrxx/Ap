@@ -1,0 +1,239 @@
+-- animation speed func
+function AnimsSpeed(value)
+    local speed = tonumber(value)
+    if speed then
+        local player = game:GetService("Players").LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        task.spawn(function()
+            while true do
+                task.wait()
+                local humanoid = character:FindFirstChildOfClass("Humanoid") or character:FindFirstChildOfClass("AnimationController")
+                if not humanoid or not character then continue end
+                for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+                    track:AdjustSpeed(speed)
+                end
+            end
+        end)
+        return "[Set to 1 to reset] Animation speed set to: " .. speed
+    else
+        return "Invalid animation speed. Usage: AnimsSpeed(\"number\")"
+    end
+end
+
+--// ANIMSPLAYER R6
+
+--// SERVICES
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+--// GUI SETUP
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "AnimPlayer"
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 300, 0, 50) -- Start with just title bar height
+frame.Position = UDim2.new(0.5, -150, 0.5, -25)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.Active = true
+frame.Draggable = true
+frame.ClipsDescendants = true
+
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+
+-- Title bar with buttons
+local titleBar = Instance.new("Frame", frame)
+titleBar.Size = UDim2.new(1, 0, 0, 40)
+titleBar.BackgroundTransparency = 1
+titleBar.Name = "TitleBar"
+
+local title = Instance.new("TextLabel", titleBar)
+title.Size = UDim2.new(0.7, 0, 1, 0)
+title.Text = "🎬 AnimPlayer"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.TextSize = 20
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Position = UDim2.new(0, 10, 0, 0)
+
+-- Close button
+local closeButton = Instance.new("TextButton", titleBar)
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -35, 0.5, -15)
+closeButton.Text = "X"
+closeButton.Font = Enum.Font.GothamBold
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+closeButton.AutoButtonColor = true
+
+Instance.new("UICorner", closeButton).CornerRadius = UDim.new(0, 8)
+
+-- Minimize button
+local minimizeButton = Instance.new("TextButton", titleBar)
+minimizeButton.Size = UDim2.new(0, 30, 0, 30)
+minimizeButton.Position = UDim2.new(1, -70, 0.5, -15)
+minimizeButton.Text = "_"
+minimizeButton.Font = Enum.Font.GothamBold
+minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+minimizeButton.AutoButtonColor = true
+
+Instance.new("UICorner", minimizeButton).CornerRadius = UDim.new(0, 8)
+
+-- Animation speed input
+local speedInputFrame = Instance.new("Frame", frame)
+speedInputFrame.Size = UDim2.new(1, -10, 0, 40)
+speedInputFrame.Position = UDim2.new(0, 5, 0, 45)
+speedInputFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+speedInputFrame.Name = "SpeedInput"
+
+Instance.new("UICorner", speedInputFrame).CornerRadius = UDim.new(0, 8)
+
+local speedInput = Instance.new("TextBox", speedInputFrame)
+speedInput.Size = UDim2.new(0.6, 0, 1, 0)
+speedInput.Position = UDim2.new(0, 5, 0, 0)
+speedInput.PlaceholderText = "Animation Speed (1 = normal)"
+speedInput.Text = ""
+speedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedInput.BackgroundTransparency = 1
+speedInput.Font = Enum.Font.Gotham
+speedInput.TextSize = 14
+
+local speedButton = Instance.new("TextButton", speedInputFrame)
+speedButton.Size = UDim2.new(0.35, 0, 0.8, 0)
+speedButton.Position = UDim2.new(0.65, 0, 0.1, 0)
+speedButton.Text = "Set Speed"
+speedButton.Font = Enum.Font.Gotham
+speedButton.TextSize = 14
+speedButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+speedButton.AutoButtonColor = true
+
+Instance.new("UICorner", speedButton).CornerRadius = UDim.new(0, 6)
+
+-- Scrollable Area
+local scroll = Instance.new("ScrollingFrame", frame)
+scroll.Size = UDim2.new(1, -10, 0, 310)
+scroll.Position = UDim2.new(0, 5, 0, 90)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scroll.ScrollBarThickness = 6
+scroll.BackgroundTransparency = 1
+scroll.Name = "ContentFrame"
+
+local listLayout = Instance.new("UIListLayout", scroll)
+listLayout.Padding = UDim.new(0, 6)
+listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- Track whether window is minimized
+local isMinimized = false
+local originalSize = UDim2.new(0, 300, 0, 400)
+local minimizedSize = UDim2.new(0, 300, 0, 40)
+
+-- Button functionality
+closeButton.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end)
+
+minimizeButton.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    if isMinimized then
+        frame.Size = minimizedSize
+        scroll.Visible = false
+        speedInputFrame.Visible = false
+    else
+        frame.Size = originalSize
+        scroll.Visible = true
+        speedInputFrame.Visible = true
+    end
+end)
+
+speedButton.MouseButton1Click:Connect(function()
+    local result = AnimsSpeed(speedInput.Text)
+    print(result)
+end)
+
+--// FUNCTION: CreateToggle(animId, title)
+function CreateToggle(animId, titleText)
+    local toggle = Instance.new("TextButton")
+    toggle.Parent = scroll
+    toggle.Size = UDim2.new(1, -10, 0, 40)
+    toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggle.Font = Enum.Font.Gotham
+    toggle.TextSize = 16
+    toggle.Text = titleText
+    toggle.AutoButtonColor = true
+
+    Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 8)
+
+    local playingAnim = nil
+
+    toggle.MouseButton1Click:Connect(function()
+        if playingAnim then
+            playingAnim:Stop()
+            playingAnim:Destroy()
+            playingAnim = nil
+            toggle.Text = titleText
+        else
+            local anim = Instance.new("Animation")
+            anim.AnimationId = animId
+            playingAnim = humanoid:LoadAnimation(anim)
+            playingAnim:Play()
+            toggle.Text = "Stopped: " .. titleText
+        end
+    end)
+end
+
+--// Toggles
+CreateToggle("rbxassetid://182436935", "Dance3")
+CreateToggle("rbxassetid://182436842", "Dance2")
+CreateToggle("rbxassetid://182435998", "Dance")
+CreateToggle("rbxassetid://52155728", "FluteDance")
+CreateToggle("rbxassetid://101862746", "FDance")
+CreateToggle("rbxassetid://27789359", "CDance")
+CreateToggle("rbxassetid://132149582", "DanceT")
+CreateToggle("rbxassetid://28156501", "Punch")
+CreateToggle("rbxassetid://28160593", "ArmFly")
+CreateToggle("rbxassetid://94700140", "Drink")
+CreateToggle("rbxassetid://32659699", "SwordJump")
+CreateToggle("rbxassetid://35154961", "HeadThrow")
+CreateToggle("rbxassetid://42070810", "Curl")
+CreateToggle("rbxassetid://42070871", "Pitchfork")
+CreateToggle("rbxassetid://182393478", "Hold")
+CreateToggle("rbxassetid://46196309", "Float")
+CreateToggle("rbxassetid://21417802", "BoardKick")
+CreateToggle("rbxassetid://30188122", "Grenade")
+CreateToggle("rbxassetid://31319431", "Still")
+CreateToggle("rbxassetid://287325678", "Crouch")
+CreateToggle("rbxassetid://33855276", "KickBack")
+CreateToggle("rbxassetid://216937924", "BendOver")
+CreateToggle("rbxassetid://148840371", "Bang")
+CreateToggle("rbxassetid://180436334", "Climb")
+CreateToggle("rbxassetid://130591500", "Walk")
+CreateToggle("rbxassetid://48138189", "Villager")
+CreateToggle("rbxassetid://68339848", "HeadBehind")
+CreateToggle("rbxassetid://56153856", "ArmsDown")
+CreateToggle("rbxassetid://128777973", "Wave")
+CreateToggle("rbxassetid://128853357", "Point")
+CreateToggle("rbxassetid://129423131", "Laugh")
+CreateToggle("rbxassetid://129423030", "Cheer")
+CreateToggle("rbxassetid://89283403", "Axe")
+CreateToggle("rbxassetid://73033721", "Scared")
+CreateToggle("rbxassetid://73137648", "Panick")
+CreateToggle("rbxassetid://73137669", "Scream")
+CreateToggle("rbxassetid://73177702", "ArmSpin")
+CreateToggle("rbxassetid://75354915", "Roar")
+CreateToggle("rbxassetid://75476727", "Wave2")
+CreateToggle("rbxassetid://78494810", "SprayPaint")
+CreateToggle("rbxassetid://85568863", "ArmDetach")
+CreateToggle("rbxassetid://86146856", "GetShot")
+CreateToggle("rbxassetid://86614939", "HeadGrab")
+CreateToggle("rbxassetid://90117804", "ImHere")
+CreateToggle("rbxassetid://90814669", "ArmBreak")
+CreateToggle("rbxassetid://204328711", "DinoWalk")
+CreateToggle("rbxassetid://103798833", "ArmBreak2")
+CreateToggle("rbxassetid://55791140", "Strum")
