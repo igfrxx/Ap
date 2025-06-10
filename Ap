@@ -237,3 +237,30 @@ CreateToggle("rbxassetid://90814669", "ArmBreak")
 CreateToggle("rbxassetid://204328711", "DinoWalk")
 CreateToggle("rbxassetid://103798833", "ArmBreak2")
 CreateToggle("rbxassetid://55791140", "Strum")
+
+-- [[ THIS IS A SNIPPET ]] --
+
+-- Import the Library
+local fnl = loadstring(game:HttpGetAsync 'https://raw.githubusercontent.com/Code1Tech/utils/main/notification.lua')()
+
+-- Make a Notification function
+function notify(title, text, duration)
+  title = title or "Notification"
+  text = text or "No text provided."
+  duration = duration or 5
+  
+  fnl:MakeNotification({
+    Title = title,
+    Text = text,
+    Duration = duration
+  })
+end
+
+-- Use the func
+notify("🎬AnimsPlayer", "This is made only for R6!!\n\nScript made by @hmmm5650", 3)
+
+-- [ LoadsScriptResources ]
+pcall(function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/LoadResources/refs/heads/main/ResSourcesLoaderSource", true))()
+warn("StartedScript")
+end)
